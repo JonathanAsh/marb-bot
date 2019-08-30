@@ -6,6 +6,7 @@ Current Functionality:
   - Keeps a count of "good bot" or "bad bot", and can report these scores whenever asked
   - Queries a free online D&D database to return spell descriptions nicely formatted
   - Rolls given dice + modifiers
+  - Adds a role to users as soon as they join the Discord server
 
 Commands I use in cmd to get it to run:
 cd Desktop/Discord Bot
