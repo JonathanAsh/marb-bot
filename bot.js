@@ -9,8 +9,8 @@ const channel = new Discord.ClientUser();
 var OnotA = false;
 var botScoreO = 0, botScoreA = 0;
 
-// List of spell index numbers that are too large. TEMPORARY FIX.
-//var banned = ["111", "317", "298", "259", "286", "139", "229", "218"];
+// Logs in bot with authentication
+client.login(auth.token);
 
 // Makes sure the client logs in successfully
 client.on('ready', () => {
@@ -105,16 +105,12 @@ client.on('message', msg => {
 			msg.channel.send("No such command. Use !help to check current available commands");
 		OnotA = true;
 	}
-	//console.log("End: Last bot to message was Omega? " + OnotA);
 });
 
 // Adds 'Straggler' role to anyone who joins
 client.on('guildMemberAdd', member => {
 	member.addRole("485317006292418572").catch(console.error);
 });
-
-// Logs in bot with authentication
-client.login(auth.token);
 
 // !spell code
 // Async function to query an API for (currently only) spell info for D&D 5e.
@@ -149,14 +145,6 @@ async function querySpell(name, ch) {
 	else {	
 		// Get url of full spell data from name query
 		url = spell.results[0].url;
-		
-		/*
-		let num = url.split("/");
-		if(num[5] == "111" || num[5] == "317" || num[5] == "298" || num[5] == "259" || num[5] == "286" || num[5] == "139" || num[5] == "229" || num[5] == "218") {
-			ch.send("That spell has too large of a description to send in Discord.");
-			return;
-		}
-		*/
 		response = await fetch(url).catch();
 		spell = await response.json().catch();
 		
@@ -168,7 +156,7 @@ async function querySpell(name, ch) {
 			level = "2nd-Level " + spell.school.name;
 		else if(level == 3)
 			level = "3rd-Level " + spell.school.name;
-		else if(level == -1 || level == 0)
+		else if(level == -1 || level == 0) // Not always uniform in API
 			level = spell.school.name + " cantrip";
 		else
 			level += "th-Level " + spell.school.name;
@@ -206,20 +194,21 @@ async function querySpell(name, ch) {
 		
 		let charSoFar = 89 + correctApos(spell.name).length + level.length + spell.casting_time.length + spell.range.length + comps.length + concDur.length;
 		let msgArray = [];
-		console.log(charSoFar);
 		
-		// Usually the description of the spell is the meatiest part of the message.
-		// Since Discord won't allow messages over the limit of 2000 characters, 
-		// the following 40 lines or so split the message up into parts to send
-		// where each section is less than 2000 characters, split up in places that
-		// are still aesthetically splitting (i.e., not in the middle of a word.)
+		/*
+		* Usually the description of the spell is the meatiest part of the message.
+		* Since Discord won't allow messages over the limit of 2000 characters, 
+		* the following 40 lines or so split the message up into parts to send
+		* where each section is less than 2000 characters, split up in places that
+		* are still aesthetically splitting (i.e., not in the middle of a word.)
+		*/
 		let newMsg = false;
 		let desc = "";
 		for(var i = 0; i < spell.desc.length; i++) {
 			if(charSoFar + spell.desc[i].length < 2000) {
 				if(i != 0 || newMsg) 
 					desc += "\n";
-				desc += spell.desc[i];
+				desc += spell.desc[i]; // Each paragraph in the description is stored separately
 				charSoFar += spell.desc[i].length;
 				newMsg = false;
 			} else {
@@ -235,7 +224,7 @@ async function querySpell(name, ch) {
 					msgArray.push("```ini\n" + removeSemicolon(correctApos(desc)) + "\n```");
 				desc = "";
 				newMsg = true;
-				charSoFar = 13;
+				charSoFar = 13; // Adds on the ```, \n's, and ini that are necessary but also count towards the character count
 			}
 		}
 		if(msgArray.length == 0)
@@ -264,7 +253,7 @@ function capitaliseFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-// Function to make sure any weird apostrophe replacements turn back into apostrophes
+// Function to make sure any weird apostrophe replacements turn back into apostrophes using simple regex and chaining
 function correctApos(str) {
 	return str.replace(/â€™/g, "'").replace(/â€”/g, "-").replace(/â€œ/g, "\"").replace(/â€�/g, "\"");
 }
