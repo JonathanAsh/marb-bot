@@ -19,7 +19,7 @@ client.on('ready', () => {
 
 // Triggers whenever a message is sent
 client.on('message', msg => {
-	if(msg.channel.id != "638200674399551519") {
+	if(msg.channel.id != "638200674399551519" && msg.author != "<@591786115975872512>") {
 	
 		// Log all messages sent and make string version of message sent, very useful for debugging
 		console.log(msg.content + " from " + msg.author);
@@ -29,59 +29,6 @@ client.on('message', msg => {
 		if(msg.author == "<@591589660610789376>") {
 			OnotA = false;
 		}
-		
-		// If the @ was for @testrole, do this
-		if(str.includes("<@&591856462628913162>")) {
-			// Makes sure the reactions go in the correct order
-			Promise.resolve(msg.react("🇭")).then(
-				function() { return Promise.resolve(msg.react("🇮")); }
-			);
-		} 
-		// If the word "arf" pops up, react with "nya" to balance it out
-		else if(str.includes("arf")) {
-			Promise.resolve(msg.react("🇳")).then(
-				function() { return Promise.resolve(msg.react("🇾")).then(
-					function() { return Promise.resolve(msg.react("🇦")); })
-				}
-			);
-		} 
-		// Otherwise if it was any other @, do this
-		else if (str.includes("<@") && str.includes(">") || str.includes("@everyone") || str.includes("@here")) {
-			var bean = msg.guild.emojis.find(emoji => emoji.name == 'mention');
-			msg.react(bean);
-		} 
-		// Also seperately check for these keywords
-		if(str.includes("weeha")) {
-			msg.channel.send("you are very wise my friend");
-			OnotA = true;
-		} 
-		// "rob..." or ".. rob..."
-		else if (str.includes("rob")) {
-			msg.channel.send("more like stinky <:rad:487522054485049356>");
-			OnotA = true;
-		}
-		// "good bot"
-		else if(str.includes("good bot")) {
-			if(OnotA) {
-				botScoreO++;
-				var love = msg.guild.emojis.find(emoji => emoji.name == 'love');
-				msg.react(love);
-			} else
-				botScoreA++;
-		}
-		// "bad bot"
-		else if(str.includes("bad bot")) {
-			if(OnotA) {
-				botScoreO--;
-				var sad = msg.guild.emojis.find(emoji => emoji.name == 'sad');
-				msg.react(sad);
-			} else
-				botScoreA--;
-		}
-		
-		// Separate one to pin XP everytime Rob posts it. MAY need to store previously pinned message in text file or run bot indefinitely to be able to unpin last XP.
-		if(msg.author == "<@176654870261006336>" && str.includes("lopip - ") || str.includes("lopip: ") || str.includes("lopip +"))
-			msg.pin();
 		
 		if(str.charAt(0) == "!") {
 			var params = str.split(" ");
@@ -95,11 +42,17 @@ client.on('message', msg => {
 					msg.channel.send("My daily score is " + botScoreO);
 				} else
 					msg.channel.send("My daily score is " + botScoreO + ", and Alpha's is " + botScoreA);
-			}	
+			}	 
 			// Report back with spell 
 			else if(params[0].includes("!spell")) {
 				// Just use fetch to query the 5e API for spell info without having to google it, separate async function required.
 				querySpell(params, msg.channel);
+			}
+			else if(params[0].includes("!say")) {
+				var reply = "";
+				for(var i = 1; i < params.length; i++)
+					reply += params[i] + " ";
+				msg.channel.send(reply);
 			}
 			else if(params[0].includes("!roll")) {
 				rollDice(params, msg.channel);
@@ -109,6 +62,61 @@ client.on('message', msg => {
 			else
 				msg.channel.send("No such command. Use !help to check current available commands");
 			OnotA = true;
+		}
+		else {
+		
+			// If the @ was for @testrole, do this
+			if(str.includes("<@&591856462628913162>")) {
+				// Makes sure the reactions go in the correct order
+				Promise.resolve(msg.react("🇭")).then(
+					function() { return Promise.resolve(msg.react("🇮")); }
+				);
+			} 
+			// If the word "arf" pops up, react with "nya" to balance it out
+			else if(str.includes("arf")) {
+				Promise.resolve(msg.react("🇳")).then(
+					function() { return Promise.resolve(msg.react("🇾")).then(
+						function() { return Promise.resolve(msg.react("🇦")); })
+					}
+				);
+			} 
+			// Otherwise if it was any other @, do this
+			else if (str.includes("<@") && str.includes(">") || str.includes("@everyone") || str.includes("@here")) {
+				var bean = msg.guild.emojis.find(emoji => emoji.name == 'mention');
+				msg.react(bean);
+			} 
+			// Also seperately check for these keywords
+			if(str.includes("weeha")) {
+				msg.channel.send("you are very wise my friend");
+				OnotA = true;
+			} 
+			// "rob..." or ".. rob..."
+			else if (str.includes("jake")) {
+				msg.channel.send("more like stinky <:rad:487522054485049356>");
+				OnotA = true;
+			}
+			// "good bot"
+			else if(str.includes("good bot")) {
+				if(OnotA) {
+					botScoreO++;
+					var love = msg.guild.emojis.find(emoji => emoji.name == 'love');
+					msg.react(love);
+				} else
+					botScoreA++;
+			}
+			// "bad bot"
+			else if(str.includes("bad bot")) {
+				if(OnotA) {
+					botScoreO--;
+					var sad = msg.guild.emojis.find(emoji => emoji.name == 'sad');
+					msg.react(sad);
+				} else
+					botScoreA--;
+			}
+			
+			// Separate one to pin XP everytime Rob posts it. MAY need to store previously pinned message in text file or run bot indefinitely to be able to unpin last XP.
+			if(msg.author == "<@176654870261006336>" && str.includes("lopip - ") || str.includes("lopip: ") || str.includes("lopip +"))
+				msg.pin();
 		}
 	}
 });
