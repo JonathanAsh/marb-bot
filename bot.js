@@ -50,9 +50,17 @@ client.on('message', msg => {
 			}
 			else if(params[0].includes("!say")) {
 				var reply = "";
-				for(var i = 1; i < params.length; i++)
+				var ping = false;
+				for(var i = 1; i < params.length; i++) {
+					if(params[i].includes("@everyone") || params[i].includes("@here"))
+						ping = true;
 					reply += params[i] + " ";
-				msg.channel.send(reply);
+				}
+				if(!ping)
+					msg.channel.send(reply);
+				else
+					msg.channel.send("Don't abuse me :(");
+				msg.delete().catch(console.error);
 			}
 			else if(params[0].includes("!roll")) {
 				rollDice(params, msg.channel);
