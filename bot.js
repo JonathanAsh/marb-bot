@@ -2,6 +2,7 @@
 const Discord = require('discord.js');
 var auth = require('./auth.json');
 const fetch = require("node-fetch");
+const fs = require('fs');
 const client = new Discord.Client();
 const channel = new Discord.ClientUser();
 
@@ -9,12 +10,10 @@ const channel = new Discord.ClientUser();
 var OnotA = false;
 var botScoreO = 0, botScoreA = 0;
 
-// List of spell index numbers that are too large. TEMPORARY FIX.
-//var banned = ["111", "317", "298", "259", "286", "139", "229", "218"];
-
 // Makes sure the client logs in successfully
 client.on('ready', () => {
-  console.log('Logged in as ${client.user.tag}!');
+	console.log('Logged in as ${client.user.tag}!');
+	fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/logs.txt", "-- OMEGA START: " + getDateTime() + " --\r\n", (err) => { if(err) { console.error(err); return; } } );
 });
 
 // Triggers whenever a message is sent
@@ -22,7 +21,9 @@ client.on('message', msg => {
 	if(msg.channel.id != "638200674399551519" && msg.author != "<@591786115975872512>") {
 	
 		// Log all messages sent and make string version of message sent, very useful for debugging
-		console.log(msg.content + " from " + msg.author);
+		var report = msg.content + " from " + msg.author + " in " + msg.channel;
+		console.log(report);
+		fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/logs.txt", report + "\r\n", (err) => { if(err) { console.error(err); return; } } );
 		var str = msg.toString().toLowerCase();
 		
 		// Figures out what bot has spoken last
@@ -352,5 +353,28 @@ function dieRoll(term) {
 	return sum;
 }
 
+function getDateTime() {
 
+    var date = new Date();
+
+    var hour = date.getHours();
+    hour = (hour < 10 ? "0" : "") + hour;
+
+    var min  = date.getMinutes();
+    min = (min < 10 ? "0" : "") + min;
+
+    var sec  = date.getSeconds();
+    sec = (sec < 10 ? "0" : "") + sec;
+
+    var year = date.getFullYear();
+
+    var month = date.getMonth() + 1;
+    month = (month < 10 ? "0" : "") + month;
+
+    var day  = date.getDate();
+    day = (day < 10 ? "0" : "") + day;
+
+    return year + ":" + month + ":" + day + ":" + hour + ":" + min + ":" + sec;
+
+}
 
