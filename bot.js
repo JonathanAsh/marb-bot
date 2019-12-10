@@ -18,19 +18,23 @@ client.on('ready', () => {
 
 // Triggers whenever a message is sent
 client.on('message', msg => {
-	if(msg.channel.id != "638200674399551519" && msg.author != "<@591786115975872512>") {
 	
-		// Log all messages sent and make string version of message sent, very useful for debugging
-		var report = msg.content + " from " + msg.author + " in " + msg.channel;
-		console.log(report);
-		fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/logs.txt", report + "\r\n", (err) => { if(err) { console.error(err); return; } } );
-		var str = msg.toString().toLowerCase();
+	// Log all messages sent in the console and in a text file for long-term
+	var report = replaceIDs(msg.content + " from " + msg.author + " in " + msg.channel + " at " + getDateTime());
+	console.log(report);
+	fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/logs.txt", report + "\r\n", (err) => { if(err) { console.error(err); return; } } );
+	
+	var str = msg.toString().toLowerCase();
 		
-		// Figures out what bot has spoken last
+	// Makes sure he doesn't reply to himself
+	if(msg.channel.id != "638200674399551519" && msg.author != "<@591786115975872512>") {
+		
+		// Figures out which bot has spoken last
 		if(msg.author == "<@591589660610789376>") {
 			OnotA = false;
 		}
 		
+		// ! is the character I'm using to denote commands
 		if(str.charAt(0) == "!") {
 			var params = str.split(" ");
 			// Report on (current) bot score
@@ -49,6 +53,7 @@ client.on('message', msg => {
 				// Just use fetch to query the 5e API for spell info without having to google it, separate async function required.
 				querySpell(params, msg.channel);
 			}
+			// Bot just replies with whatever the user tells it to say, doesn't allow @everyone nor @here since anyone can use it, but might eventually restrict this command to only certain roles
 			else if(params[0].includes("!say")) {
 				var reply = "";
 				var ping = false;
@@ -63,11 +68,13 @@ client.on('message', msg => {
 					msg.channel.send("Don't abuse me :(");
 				msg.delete().catch(console.error);
 			}
+			// Rolls whatever dice the user specifies
 			else if(params[0].includes("!roll")) {
 				rollDice(params, msg.channel);
 			}
+			// Returns all commands that are implemented atm
 			else if(params[0].includes("!help"))
-				msg.channel.send("**Commands:**\n• !score [alpha|omega] to report the daily score of both/either bot(s).\n• !spell [spell name] to get data on D&D 5e spells.\n• !roll [die|+|-|value]");
+				msg.channel.send("**Commands:**\n• !score [alpha|omega] to report the daily score of both/either bot(s).\n• !spell [spell name] to get data on D&D 5e spells.\n• !roll [die|+|-|value]\n• !say [message] to make me say anything/ping anyone for you anonymously (mostly)");
 			else
 				msg.channel.send("No such command. Use !help to check current available commands");
 			OnotA = true;
@@ -76,7 +83,7 @@ client.on('message', msg => {
 		
 			// If the @ was for @testrole, do this
 			if(str.includes("<@&591856462628913162>")) {
-				// Makes sure the reactions go in the correct order
+				// Promises make sure the reactions go in the correct order
 				Promise.resolve(msg.react("🇭")).then(
 					function() { return Promise.resolve(msg.react("🇮")); }
 				);
@@ -353,6 +360,16 @@ function dieRoll(term) {
 	return sum;
 }
 
+// Replaces the given IDs of users and channels with their more user-friendly counterparts (our names for 'em). There's probably a better way to do this.
+function replaceIDs(r) {
+	return r.replace(/<#591793011483082772>/g, "#dev-centre").replace(/<#594430167938629662>/g, "#minecraft").replace(/<#612116178407522304>/g, "#discussion").replace(/<#485317731009167364>/g, "#tactics").replace(/<#559269311294865409>/g, "#command-centre")
+			.replace(/<#485317959783546901>/g, "#mems").replace(/<#567403796662059018>/g, "#dnd").replace(/<#494781493454045185>/g, "#gams").replace(/<#485316399326167040>/g, "#main").replace(/<@187788766599970817>/g, "@Marbles#2385")
+			.replace(/<@179892251898413056>/g, "@Dash Alpha#3450").replace(/<@261725719044947972>/g, "@AhimsaNZ#4010").replace(/<@189998232951062528>/g, "@Elcarien#6346").replace(/<@296499043268558849>/g, "@maximize75#1963")
+			.replace(/<@176654870261006336>/g, "@PrimeHylian#6432").replace(/<@314896092502294529>/g, "@Moodes567#2862").replace(/<@561029934844346381>/g, "@Natopotato#4629").replace(/<@186703389462233089>/g, "@OrphanPunter870#8474")
+			.replace(/<@591786115975872512>/g, "@Omega Bot#5343").replace(/<@591589660610789376>/g, "@Alpha Bot#4046");
+}
+
+// Returns the date and time in a nice format for the console and text file logs
 function getDateTime() {
 
     var date = new Date();
