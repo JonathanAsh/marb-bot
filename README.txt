@@ -7,6 +7,8 @@ Current Functionality:
   - Queries a free online D&D database to return spell descriptions nicely formatted
   - Rolls given dice + modifiers
   - Adds a role to users as soon as they join the Discord server
+  - Repeats back whatever it is commanded to
+  - Logs all messages sent from who & where & when in a text file
 
 Commands I use in cmd to get it to run:
 cd Desktop/Discord Bot
