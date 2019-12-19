@@ -77,7 +77,7 @@ client.on('message', msg => {
 						ping = true;
 					reply += params[i] + " ";
 				}
-				if(!ping)
+				if(!ping && reply != "")
 					msg.channel.send(reply);
 				else
 					msg.channel.send("Don't abuse me :(");
@@ -89,7 +89,7 @@ client.on('message', msg => {
 			}
 			// Returns all commands that are implemented atm
 			else if(params[0].includes("!help"))
-				msg.channel.send("**Commands:**\n• !score [alpha|omega] to report the daily score of both/either bot(s).\n• !spell [spell name] to get data on D&D 5e spells.\n• !roll [die|+|-|value]\n• !say [message] to make me say anything/ping anyone for you anonymously (mostly)");
+				msg.channel.send("**Commands:**\n• !score [alpha|omega] to report the daily score of both/either bot(s).\n• !spell <spell name> to get data on D&D 5e spells.\n• !roll {die|+|-|value}\n• !say <message> to make me say anything/ping anyone for you anonymously (mostly)");
 			else
 				msg.channel.send("No such command. Use !help to check current available commands");
 			OnotA = true;
