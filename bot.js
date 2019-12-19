@@ -10,10 +10,19 @@ const channel = new Discord.ClientUser();
 var OnotA = false;
 var botScoreO = 0, botScoreA = 0;
 
-// Makes sure the client logs in successfully
+// Makes sure the client logs in successfully, logs time when it comes up, and loads previous values which are stored in file.
 client.on('ready', () => {
 	console.log('Logged in as ${client.user.tag}!');
 	fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/logs.txt", "-- OMEGA START: " + getDateTime() + " --\r\n", (err) => { if(err) { console.error(err); return; } } );
+	fs.readFile("/Users/The Baboon/Desktop/Discord Bot/botscore.txt", "utf8", function(err, contents) {
+		if(err) { 
+			console.error(err); 
+			return;
+		}
+		var temp = contents.split(',');
+		botScoreO = temp[0];
+		botScoreA = temp[1];
+	});
 });
 
 // Triggers whenever a message is sent
@@ -46,17 +55,17 @@ client.on('message', msg => {
 			// Report on (current) bot score
 			if(params[0].includes("!score")) {
 				if(str.includes("alpha") && str.includes("omega")) {
-					msg.channel.send("My daily score is " + botScoreO + ", and Alpha's is " + botScoreA);
+					msg.channel.send("My all-time score is " + botScoreO + ", and Alpha's is " + botScoreA);
 				} else if(str.includes("alpha")) {
-					msg.channel.send("Alpha's daily score is " + botScoreA);
+					msg.channel.send("Alpha's all-time score is " + botScoreA);
 				} else if (str.includes("omega")) {
-					msg.channel.send("My daily score is " + botScoreO);
+					msg.channel.send("My all-time score is " + botScoreO);
 				} else
-					msg.channel.send("My daily score is " + botScoreO + ", and Alpha's is " + botScoreA);
+					msg.channel.send("My all-time score is " + botScoreO + ", and Alpha's is " + botScoreA);
+				fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/botscore.txt", botScoreO + "," + botScoreA, (err) => { if(err) { console.error(err); return; } } );
 			}	 
 			// Report back with spell 
 			else if(params[0].includes("!spell")) {
-				// Just use fetch to query the 5e API for spell info without having to google it, separate async function required.
 				querySpell(params, msg.channel);
 			}
 			// Bot just replies with whatever the user tells it to say, doesn't allow @everyone nor @here since anyone can use it, but might eventually restrict this command to only certain roles
@@ -85,6 +94,7 @@ client.on('message', msg => {
 				msg.channel.send("No such command. Use !help to check current available commands");
 			OnotA = true;
 		}
+		// If it's not a command but instead a keyword/phrase, ...
 		else {
 		
 			// If the @ was for @testrole, do this
@@ -107,8 +117,8 @@ client.on('message', msg => {
 				msg.channel.send("you are very wise my friend");
 				OnotA = true;
 			} 
-			// "rob..." or ".. rob..."
-			else if (str.includes("jake")) {
+			// the name of the sucker of the month
+			else if (str.includes("jordan") || str.includes("gro'dank")) {
 				msg.channel.send("more like stinky <:rad:487522054485049356>");
 				OnotA = true;
 			}
@@ -130,6 +140,22 @@ client.on('message', msg => {
 				} else
 					botScoreA--;
 			}
+			// "Hey Omega"
+			else if(str.includes("hey omega")) {
+				// Get a random number from 0-4
+				var c = Math.floor(Math.random() * Math.floor(5));
+				if(c == 0)
+					msg.channel.send("Yes?");
+				else if(c == 1)
+					msg.channel.send("Can I help?");
+				else if(c == 2)
+					msg.channel.send("How may I be of assistance?");
+				else if(c == 3)
+					msg.channel.send("What would you like?");
+				else
+					msg.channel.send("What can I do for you?");
+				OnotA = true;
+			}
 			
 			// Separate one to pin XP everytime Rob posts it. MAY need to store previously pinned message in text file or run bot indefinitely to be able to unpin last XP.
 			if(msg.author == "<@176654870261006336>" && str.includes("lopip - ") || str.includes("lopip: ") || str.includes("lopip +"))
@@ -141,6 +167,12 @@ client.on('message', msg => {
 // Adds 'Straggler' role to anyone who joins
 client.on('guildMemberAdd', member => {
 	member.addRole("485317006292418572").catch(console.error);
+});
+
+// Adds a bit of error handling for when the bot disconnects. Usually this will occur when the internet connection fails, but could also be for any uncaught exceptions that are thrown.
+client.on('disconnect', e => {
+	console.error('Disconnected in the middle of something - internet go down? :(');
+	//client.destroy().catch();
 });
 
 // Logs in bot with authentication
