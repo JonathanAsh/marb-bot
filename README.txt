@@ -1,4 +1,4 @@
-First attempt making a Discord bot. Uses Node.js, haven't really used it before but it seems pretty intuitive. Currently hosted on a free VM on Microsoft Azure while I source a Pi to host it myself to make things a little easier.
+First attempt making a Discord bot. Uses Node.js, haven't really used it before but it seems pretty intuitive.
 
 Current Functionality:
   - Replies to certain keywords in messages with other keywords
@@ -9,9 +9,6 @@ Current Functionality:
   - Adds a role to users as soon as they join the Discord server
   - Repeats back whatever it is commanded to
   - Logs all messages sent from who & where & when in a text file
-
-Commands I use in cmd to get it to run:
-cd Desktop/Discord Bot
-node bot.js
+  - Stores previous variables in file to load from them again after restart
 
 - Jonathan Ashworth
