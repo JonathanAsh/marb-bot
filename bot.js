@@ -10,6 +10,9 @@ const channel = new Discord.ClientUser();
 var OnotA = false;
 var botScoreO = 0, botScoreA = 0;
 
+// Logs in bot with authentication
+client.login(auth.token);
+
 // Makes sure the client logs in successfully, logs time when it comes up, and loads previous values which are stored in file.
 client.on('ready', () => {
 	console.log('Logged in as ${client.user.tag}!');
@@ -170,13 +173,11 @@ client.on('guildMemberAdd', member => {
 });
 
 // Adds a bit of error handling for when the bot disconnects. Usually this will occur when the internet connection fails, but could also be for any uncaught exceptions that are thrown.
-client.on('disconnect', e => {
-	console.error('Disconnected in the middle of something - internet go down? :(');
-	//client.destroy().catch();
+client.on('error', e => {
+	console.error('Disconnected in the middle of running - internet go down? :(');
+	client.destroy().catch();
+	client.login(auth.token);
 });
-
-// Logs in bot with authentication
-client.login(auth.token);
 
 // !spell code
 // Async function to query an API for (currently only) spell info for D&D 5e.
