@@ -4,14 +4,14 @@ var auth = require('./auth.json');
 const fetch = require("node-fetch");
 const fs = require('fs');
 const client = new Discord.Client();
-const channel = new Discord.ClientUser();
+//const channel = new Discord.ClientUser();
 
 // Variables for the bot score aspect
 var OnotA = false;
 var botScoreO = 0, botScoreA = 0;
 
 // Logs in bot with authentication
-client.login(auth.token);
+client.login(auth.token).catch(console.error);
 
 // Makes sure the client logs in successfully, logs time when it comes up, and loads previous values which are stored in file.
 client.on('ready', () => {
@@ -179,8 +179,7 @@ client.on('error', e => {
 	client.login(auth.token);
 });
 
-// !spell code
-// Async function to query an API for (currently only) spell info for D&D 5e.
+// Async function to query an API for requested spell info for D&D 5e.
 async function querySpell(name, ch) {
 	// List of words in titles which have to be searched with lower-case first letters since they're not important, just connect the title together.
 	let unCapitals = ["of", "and", "to", "from", "without", "the", "or"];
@@ -337,7 +336,6 @@ function removeSemicolon(str) {
 	return str.replace(/;/g, " -");
 }
 
-// !roll code
 // Rolling dice for convenience
 function rollDice(dice, ch) {
 	var total = 0, tempTotal = 0;
