@@ -9,6 +9,7 @@ const client = new Discord.Client();
 // Variables for the bot score aspect
 var OnotA = false;
 var botScoreO = 0, botScoreA = 0;
+var newList = [];
 
 // Logs in bot with authentication
 client.login(auth.token).catch(console.error);
@@ -16,7 +17,9 @@ client.login(auth.token).catch(console.error);
 // Makes sure the client logs in successfully, logs time when it comes up, and loads previous values which are stored in file.
 client.on('ready', () => {
 	console.log('Logged in as ${client.user.tag}!');
+	// Log Omega's bootup time
 	fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/logs.txt", "-- OMEGA START: " + getDateTime() + " --\r\n", (err) => { if(err) { console.error(err); return; } } );
+	// Get bot score info from last run
 	fs.readFile("/Users/The Baboon/Desktop/Discord Bot/botscore.txt", "utf8", function(err, contents) {
 		if(err) { 
 			console.error(err); 
@@ -25,6 +28,20 @@ client.on('ready', () => {
 		var temp = contents.split(',');
 		botScoreO = temp[0];
 		botScoreA = temp[1];
+	});
+	// Read from saved shopping list
+	fs.readFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "utf8", function(err, contents) {
+		if(err) { 
+			console.error(err); 
+			return;
+		}
+		var temp = contents.split(',');
+		if(temp.length == 1)
+			newList[0] = temp[0];
+		else {
+			for(let i = 0; i < temp.length; i++)
+				newList.push(temp[i]);
+		}
 	});
 });
 
@@ -90,9 +107,69 @@ client.on('message', msg => {
 			else if(params[0].includes("!roll")) {
 				rollDice(params, msg.channel);
 			}
+			// Adds, removes, and displays from a list
+			else if(params[0].includes("!list") && msg.author == "<@176654870261006336>" || msg.author == "<@179892251898413056>" || msg.author == "<@187788766599970817>") {
+				// Yucky lack of information
+				if(params[1] == null) {
+					msg.channel.send("Please specify a command for the list.");
+					return;
+				}
+				if(!params[1].includes("add") && !params[1].includes("rmv") && !params[1].includes("show")) {
+					msg.channel.send("Unknown list command. Either use !list add <item>, !list rmv <item>, or !list show");
+					return;
+				}
+				
+				if(params[1].includes("add")) {
+					// Makes sure there is an item to add to the list
+					if(params[2] == null) {
+						msg.channel.send("~~eat my ass~~ Please list item(s) to add to the list");
+						return;
+					}
+					// Adds all the new items to the list
+					let listItems = "";
+					for(let i = 2; i < params.length; i++) {
+						newList.push(params[i]);
+						if(i == 2)
+							listItems += params[i];
+						else
+							listItems += "," + params[i];
+					}
+					if(newList.length == 1)
+						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", params[i], (err) => { if(err) { console.error(err); return; } } );
+					else
+						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "," + params[i], (err) => { if(err) { console.error(err); return; } } );
+					
+					msg.react("👍");
+				} else if(params[1].includes("rmv")) {
+					//newList.splice(newList.indexOf(params[3]), 1);
+					let tempList = [];
+					for(let i = 0; i < newList.length; i++) {
+						console.log("\'" + newList[i] + ":" + params[2] + "\'");
+						if(newList[i] != params[2])
+							tempList.push(newList[i]);
+					}
+					newList = tempList;
+					
+					let listItems = "";
+					for(let i = 0; i < newList.length; i++) {
+						if(i != newList.length - 1)
+							listItems += newList[i] + ",";
+						else
+							listItems += newList[i];
+					}
+					console.log(listItems);
+					fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", listItems, (err) => { if(err) { console.error(err); return; } } );
+					msg.react("👍");
+				} else {
+					let displayList = "The items in the shopping list are: \n";
+					for(let i = 0; i < newList.length; i++)
+						displayList += "• " + newList[i] + "\n";
+					msg.channel.send(displayList);
+				}
+			}
 			// Returns all commands that are implemented atm
 			else if(params[0].includes("!help"))
-				msg.channel.send("**Commands:**\n• !score [alpha|omega] to report the daily score of both/either bot(s).\n• !spell <spell name> to get data on D&D 5e spells.\n• !roll {die|+|-|value}\n• !say <message> to make me say anything/ping anyone for you anonymously (mostly)");
+				msg.channel.send("**Commands:**\n• !score [alpha|omega] to report the daily score of both/either bot(s).\n• !spell <spell name> to get data on D&D 5e spells.\n• !roll {die|+|-|value}\n• !say <message> to make me say anything/ping anyone for you anonymously (mostly)\n• !list {add|rmv|show} <items...> to add to the flat shopping list. (Only available to flat members)");
 			else
 				msg.channel.send("No such command. Use !help to check current available commands");
 			OnotA = true;
@@ -190,7 +267,6 @@ async function querySpell(name, ch) {
 		words[0] = capitaliseFirstLetter(words[0]);
 		words[1] = capitaliseFirstLetter(words[1]);
 		url += words[0] + "%2F" + words[1];
-		console.log("This shouldn't change: " + url);
 	} else {
 		for(var i = 1; i < name.length; i++) {
 			if(i != 1) url += "+";
@@ -201,7 +277,6 @@ async function querySpell(name, ch) {
 				url += name[i];
 		}
 	}
-	console.log("URL Queried: " + url);
 	
 	let response = await fetch(url);
 	let spell = await response.json();
@@ -211,14 +286,6 @@ async function querySpell(name, ch) {
 	else {	
 		// Get url of full spell data from name query
 		url = spell.results[0].url;
-		
-		/*
-		let num = url.split("/");
-		if(num[5] == "111" || num[5] == "317" || num[5] == "298" || num[5] == "259" || num[5] == "286" || num[5] == "139" || num[5] == "229" || num[5] == "218") {
-			ch.send("That spell has too large of a description to send in Discord.");
-			return;
-		}
-		*/
 		response = await fetch(url).catch();
 		spell = await response.json().catch();
 		
@@ -399,6 +466,7 @@ function replaceIDs(r) {
 			.replace(/<@179892251898413056>/g, "@Dash Alpha#3450").replace(/<@261725719044947972>/g, "@AhimsaNZ#4010").replace(/<@189998232951062528>/g, "@Elcarien#6346").replace(/<@296499043268558849>/g, "@maximize75#1963")
 			.replace(/<@176654870261006336>/g, "@PrimeHylian#6432").replace(/<@314896092502294529>/g, "@Moodes567#2862").replace(/<@561029934844346381>/g, "@Natopotato#4629").replace(/<@186703389462233089>/g, "@OrphanPunter870#8474")
 			.replace(/<@591786115975872512>/g, "@Omega Bot#5343").replace(/<@591589660610789376>/g, "@Alpha Bot#4046").replace(/<@234395307759108106>/g, "@Groovy#7254");
+			
 }
 
 // Returns the date and time in a nice format for the console and text file logs
@@ -423,7 +491,7 @@ function getDateTime() {
     var day  = date.getDate();
     day = (day < 10 ? "0" : "") + day;
 
-    return year + ":" + month + ":" + day + ":" + hour + ":" + min + ":" + sec;
+    return year + "-" + month + "-" + day + "_" + hour + ":" + min + "." + sec;
 
 }
 
