@@ -6,10 +6,14 @@ const fs = require('fs');
 const client = new Discord.Client();
 //const channel = new Discord.ClientUser();
 
-// Variables for the bot score aspect
+// Variables for the bot scoring
 var OnotA = false;
 var botScoreO = 0, botScoreA = 0;
+
+// Variables for the shopping list
 var newList = [];
+var clearConfirm = false;
+var clearer = "";
 
 // Logs in bot with authentication
 client.login(auth.token).catch(console.error);
@@ -36,8 +40,10 @@ client.on('ready', () => {
 			return;
 		}
 		var temp = contents.split(',');
-		if(temp.length == 1)
-			newList[0] = temp[0];
+		if(temp.length == 0)
+			console.log("No items in list on startup.");
+		else if(temp.length == 1)
+			newList = temp;
 		else {
 			for(let i = 0; i < temp.length; i++)
 				newList.push(temp[i]);
@@ -108,13 +114,13 @@ client.on('message', msg => {
 				rollDice(params, msg.channel);
 			}
 			// Adds, removes, and displays from a list
-			else if(params[0].includes("!list") && msg.author == "<@176654870261006336>" || msg.author == "<@179892251898413056>" || msg.author == "<@187788766599970817>") {
+			else if(params[0].includes("!list") && (msg.author == "<@176654870261006336>" || msg.author == "<@179892251898413056>" || msg.author == "<@187788766599970817>")) {
 				// Yucky lack of information
 				if(params[1] == null) {
 					msg.channel.send("Please specify a command for the list.");
 					return;
 				}
-				if(!params[1].includes("add") && !params[1].includes("rmv") && !params[1].includes("show")) {
+				if(!params[1].includes("add") && !params[1].includes("rmv") && !params[1].includes("show") && !params[1].includes("clear")) {
 					msg.channel.send("Unknown list command. Either use !list add <item>, !list rmv <item>, or !list show");
 					return;
 				}
@@ -122,34 +128,39 @@ client.on('message', msg => {
 				if(params[1].includes("add")) {
 					// Makes sure there is an item to add to the list
 					if(params[2] == null) {
-						msg.channel.send("~~eat my ass~~ Please list item(s) to add to the list");
+						msg.channel.send("~~eat my ass~~ Please specify an item to add to the list");
 						return;
 					}
 					// Adds all the new items to the list
 					let listItems = "";
 					for(let i = 2; i < params.length; i++) {
-						newList.push(params[i]);
 						if(i == 2)
 							listItems += params[i];
 						else
-							listItems += "," + params[i];
+							listItems += " " + params[i];
 					}
-					if(newList.length == 1)
-						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", params[i], (err) => { if(err) { console.error(err); return; } } );
+					
+					// Adds to the array
+					newList.push(listItems);
+					
+					// Adds to the text file
+					if(newList.length == 1 || newList[0] == "")
+						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", listItems, (err) => { if(err) { console.error(err); return; } } );
 					else
-						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "," + params[i], (err) => { if(err) { console.error(err); return; } } );
+						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "," + listItems, (err) => { if(err) { console.error(err); return; } } );
 					
 					msg.react("👍");
+					clearConfirm = false;
 				} else if(params[1].includes("rmv")) {
-					//newList.splice(newList.indexOf(params[3]), 1);
-					let tempList = [];
-					for(let i = 0; i < newList.length; i++) {
-						console.log("\'" + newList[i] + ":" + params[2] + "\'");
-						if(newList[i] != params[2])
-							tempList.push(newList[i]);
-					}
-					newList = tempList;
+					// Concatenates items with spaces to match ones in the list for deleting (?)
+					let longParams = params[2];
+					for(let i = 3; i < params.length; i++)
+						longParams += " " + params[i];
 					
+					// Removes the specified item
+					newList.splice(newList.indexOf(params[2]), 1);
+					
+					// Chuck the items in the list together 
 					let listItems = "";
 					for(let i = 0; i < newList.length; i++) {
 						if(i != newList.length - 1)
@@ -157,19 +168,39 @@ client.on('message', msg => {
 						else
 							listItems += newList[i];
 					}
-					console.log(listItems);
+					
+					// Replace the file with a new updated one
 					fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", listItems, (err) => { if(err) { console.error(err); return; } } );
 					msg.react("👍");
+					clearConfirm = false;
+				} else if (params[1].includes("show")) {
+					if(newList.length == 0 || newList[0] == "") {
+						msg.channel.send("There are no items in the list.");
+						console.log(newList[0]);
+					}
+					else {
+						let displayList = "The item(s) in the shopping list are: \n";
+						console.log("item in list: \'" + newList[0] + "\'.");
+						for(let i = 0; i < newList.length; i++)
+							displayList += "• " + capitaliseFirstLetter(newList[i]) + "\n";
+						msg.channel.send(displayList);
+					}
 				} else {
-					let displayList = "The items in the shopping list are: \n";
-					for(let i = 0; i < newList.length; i++)
-						displayList += "• " + newList[i] + "\n";
-					msg.channel.send(displayList);
+					if (clearConfirm && clearer == msg.author) {
+						newList = [];
+						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "", (err) => { if(err) { console.error(err); return; } } );
+						msg.channel.send("List cleared.");
+						clearConfirm = false;
+					} else {
+						msg.channel.send("Please type again to confirm clearing the list fully.");
+						clearer = msg.author;
+						clearConfirm = true;
+					}
 				}
 			}
 			// Returns all commands that are implemented atm
 			else if(params[0].includes("!help"))
-				msg.channel.send("**Commands:**\n• !score [alpha|omega] to report the daily score of both/either bot(s).\n• !spell <spell name> to get data on D&D 5e spells.\n• !roll {die|+|-|value}\n• !say <message> to make me say anything/ping anyone for you anonymously (mostly)\n• !list {add|rmv|show} <items...> to add to the flat shopping list. (Only available to flat members)");
+				msg.channel.send("**Commands:**\n• !score [alpha|omega] to report the daily score of both/either bot(s).\n• !spell <spell name> to get data on D&D 5e spells.\n• !roll {die|+|-|value}\n• !say <message> to make me say anything/ping anyone for you anonymously (mostly)\n• !list {add|rmv|show|clear} <item> to add to the flat shopping list. (Only available to Flat-Beta members)");
 			else
 				msg.channel.send("No such command. Use !help to check current available commands");
 			OnotA = true;
