@@ -10,5 +10,6 @@ Current Functionality:
   - Repeats back whatever it is commanded to
   - Logs all messages sent from who & where & when in a text file
   - Stores previous variables in file to load from them again after restart
+  - Holds a list of shopping items that can be added/removed/cleared/displayed in Discord, which is backed up in a text file
 
 - Jonathan Ashworth
