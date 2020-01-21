@@ -33,22 +33,8 @@ client.on('ready', () => {
 		botScoreO = temp[0];
 		botScoreA = temp[1];
 	});
-	// Read from saved shopping list
-	fs.readFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "utf8", function(err, contents) {
-		if(err) { 
-			console.error(err); 
-			return;
-		}
-		var temp = contents.split(',');
-		if(temp.length == 0)
-			console.log("No items in list on startup.");
-		else if(temp.length == 1)
-			newList = temp;
-		else {
-			for(let i = 0; i < temp.length; i++)
-				newList.push(temp[i]);
-		}
-	});
+	
+	reloadList();
 });
 
 // Triggers whenever a message is sent
@@ -135,30 +121,34 @@ client.on('message', msg => {
 					let listItems = "";
 					for(let i = 2; i < params.length; i++) {
 						if(i == 2)
-							listItems += params[i];
+							listItems += params[i].trim();
 						else
-							listItems += " " + params[i];
+							listItems += " " + params[i].trim();
 					}
+					
+					// Remove the extra placeholder
+					if(newList[0] == "empty")
+						newList.splice(newList.indexOf("empty"), 1)
 					
 					// Adds to the array
 					newList.push(listItems);
 					
-					// Adds to the text file
-					if(newList.length == 1 || newList[0] == "")
-						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", listItems, (err) => { if(err) { console.error(err); return; } } );
+					// Adds to the text file -- might not need writeFile anymore, but probably won't touch it anyway.
+					if(newList.length == 1)
+						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", listItems, (err) => { if(err) { console.error(err); return; } } );
 					else
 						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "," + listItems, (err) => { if(err) { console.error(err); return; } } );
 					
 					msg.react("👍");
 					clearConfirm = false;
 				} else if(params[1].includes("rmv")) {
-					// Concatenates items with spaces to match ones in the list for deleting (?)
+					// Concatenates items with spaces to match ones in the list for deleting
 					let longParams = params[2];
 					for(let i = 3; i < params.length; i++)
 						longParams += " " + params[i];
 					
 					// Removes the specified item
-					newList.splice(newList.indexOf(params[2]), 1);
+					newList.splice(newList.indexOf(longParams), 1);
 					
 					// Chuck the items in the list together 
 					let listItems = "";
@@ -169,18 +159,18 @@ client.on('message', msg => {
 							listItems += newList[i];
 					}
 					
-					// Replace the file with a new updated one
-					fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", listItems, (err) => { if(err) { console.error(err); return; } } );
+					// Replace the file with a new updated one -- with "empty" in the file if there's nothing lef tin the list
+					if(newList.length == 0 || newList[0] == null)
+						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "empty", (err) => { if(err) { console.error(err); return; } } );
+					else
+						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", listItems, (err) => { if(err) { console.error(err); return; } } );
 					msg.react("👍");
 					clearConfirm = false;
 				} else if (params[1].includes("show")) {
-					if(newList.length == 0 || newList[0] == "") {
+					if(newList.length == 0 || (newList[0] == "empty" && newList.length == 1)) {
 						msg.channel.send("There are no items in the list.");
-						console.log(newList[0]);
-					}
-					else {
+					} else {
 						let displayList = "The item(s) in the shopping list are: \n";
-						console.log("item in list: \'" + newList[0] + "\'.");
 						for(let i = 0; i < newList.length; i++)
 							displayList += "• " + capitaliseFirstLetter(newList[i]) + "\n";
 						msg.channel.send(displayList);
@@ -188,7 +178,7 @@ client.on('message', msg => {
 				} else {
 					if (clearConfirm && clearer == msg.author) {
 						newList = [];
-						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "", (err) => { if(err) { console.error(err); return; } } );
+						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "empty", (err) => { if(err) { console.error(err); return; } } );
 						msg.channel.send("List cleared.");
 						clearConfirm = false;
 					} else {
@@ -197,6 +187,7 @@ client.on('message', msg => {
 						clearConfirm = true;
 					}
 				}
+				OnotA = true;
 			}
 			// Returns all commands that are implemented atm
 			else if(params[0].includes("!help"))
@@ -268,7 +259,7 @@ client.on('message', msg => {
 				OnotA = true;
 			}
 			
-			// Separate one to pin XP everytime Rob posts it. MAY need to store previously pinned message in text file or run bot indefinitely to be able to unpin last XP.
+			// Separate one to pin XP everytime Rob posts it. MAY make unpin last XP later.
 			if(msg.author == "<@176654870261006336>" && str.includes("lopip - ") || str.includes("lopip: ") || str.includes("lopip +"))
 				msg.pin();
 		}
@@ -366,7 +357,6 @@ async function querySpell(name, ch) {
 		
 		let charSoFar = 89 + correctApos(spell.name).length + level.length + spell.casting_time.length + spell.range.length + comps.length + concDur.length;
 		let msgArray = [];
-		console.log(charSoFar);
 		
 		// Usually the description of the spell is the meatiest part of the message.
 		// Since Discord won't allow messages over the limit of 2000 characters, 
@@ -452,7 +442,6 @@ function rollDice(dice, ch) {
 		}
 		else if(dice[i].includes("+")) {
 			if(dice[i].length == 1) {
-				//console.log("dice[i+1] = " + dice[i+1]);
 				if(dice[i + 1].includes("d"))
 					tempTotal += dieRoll(dice[i+1]);
 				else
@@ -475,7 +464,6 @@ function rollDice(dice, ch) {
 		}
 		else
 			console.log("Unknown term. " + dice[i]);
-		//console.log("character: " + dice[i] + ", result: " + tempTotal);
 		total += tempTotal;
 	}
 	ch.send("```ini\nRoll Result: " + total + "\n```");
@@ -524,5 +512,25 @@ function getDateTime() {
 
     return year + "-" + month + "-" + day + "_" + hour + ":" + min + "." + sec;
 
+}
+
+function reloadList() {
+	// Read from saved shopping list
+	fs.readFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "utf8", function(err, contents) {
+		if(err) { 
+			console.error(err); 
+			return;
+		}
+		var temp = contents.split(',');
+		
+		if(temp[0] == "empty") {
+			console.log("No items in list on startup.");
+		} else if(temp.length == 1)
+			newList = temp;
+		else {
+			for(let i = 0; i < temp.length; i++)
+				newList.push(temp[i]);
+		}
+	});
 }
 
