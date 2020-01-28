@@ -100,7 +100,7 @@ client.on('message', msg => {
 				rollDice(params, msg.channel);
 			}
 			// Adds, removes, and displays from a list
-			else if(params[0].includes("!list") && (msg.author == "<@176654870261006336>" || msg.author == "<@179892251898413056>" || msg.author == "<@187788766599970817>")) {
+			else if(params[0].includes("!list") && (msg.author == "<@176654870261006336>" || msg.author == "<@179892251898413056>" || msg.author == "<@187788766599970817>" || msg.author == "<@261725719044947972>")) {
 				// Yucky lack of information
 				if(params[1] == null) {
 					msg.channel.send("Please specify a command for the list.");
@@ -514,6 +514,7 @@ function getDateTime() {
 
 }
 
+// Reads from the shoppingList file and adds values into the newList array
 function reloadList() {
 	// Read from saved shopping list
 	fs.readFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "utf8", function(err, contents) {
