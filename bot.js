@@ -138,6 +138,9 @@ client.on('message', msg => {
 						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", listItems, (err) => { if(err) { console.error(err); return; } } );
 					else
 						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "," + listItems, (err) => { if(err) { console.error(err); return; } } );
+					//newList = [];
+					//reloadList();
+					// Once these two run, it keeps the spaces in the file -- need to split between commas as well
 					
 					msg.react("👍");
 					clearConfirm = false;
@@ -220,7 +223,7 @@ client.on('message', msg => {
 				OnotA = true;
 			} 
 			// the name of the sucker of the month
-			else if (str.includes("jordan") || str.includes("gro'dank")) {
+			else if (str.includes("nathan") || str.includes("nato")) {
 				msg.channel.send("more like stinky <:rad:487522054485049356>");
 				OnotA = true;
 			}
@@ -307,7 +310,8 @@ async function querySpell(name, ch) {
 		ch.send("That spell does not exist or is misspelt.");
 	else {	
 		// Get url of full spell data from name query
-		url = spell.results[0].url;
+		url = "http://dnd5eapi.co"
+		url += spell.results[0].url;
 		response = await fetch(url).catch();
 		spell = await response.json().catch();
 		
