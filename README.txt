@@ -12,7 +12,4 @@ Current Functionality:
   - Stores previous variables in file to load from them again after restart
   - Holds a list of shopping items that can be added/removed/cleared/displayed in Discord, which is backed up in a text file
 
-TODO:
-  - Make list handle accepting commas in added items better (sanitise input, essentially)
-
 - Jonathan Ashworth

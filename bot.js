@@ -101,6 +101,7 @@ client.on('message', msg => {
 			}
 			// Adds, removes, and displays from a list
 			else if(params[0].includes("!list") && (msg.author == "<@176654870261006336>" || msg.author == "<@179892251898413056>" || msg.author == "<@187788766599970817>" || msg.author == "<@261725719044947972>")) {
+				
 				// Yucky lack of information
 				if(params[1] == null) {
 					msg.channel.send("Please specify a command for the list.");
@@ -111,47 +112,78 @@ client.on('message', msg => {
 					return;
 				}
 				
+				// Checks which command has been used
 				if(params[1].includes("add")) {
+					
 					// Makes sure there is an item to add to the list
 					if(params[2] == null) {
 						msg.channel.send("~~eat my ass~~ Please specify an item to add to the list");
 						return;
 					}
-					// Adds all the new items to the list
-					let listItems = "";
-					for(let i = 2; i < params.length; i++) {
-						if(i == 2)
-							listItems += params[i].trim();
-						else
-							listItems += " " + params[i].trim();
-					}
 					
-					// Remove the extra placeholder
+					// Remove the empty placeholder
 					if(newList[0] == "empty")
 						newList.splice(newList.indexOf("empty"), 1)
 					
-					// Adds to the array
-					newList.push(listItems);
+					// Splits items by commas
+					var addList = str.replace("!list add ", "").split(",");
+					
+					// Concatenates items and evenly spaces them, then pushes to the list.
+					for(let j = 0; j < addList.length; j++) {
+						let items = addList[j].split(" ");
+						let item = "";
+						for(let i = 0; i < items.length; i++) {
+							// Still weird thing where I'm getting ""s somewhere after the first one, probably better to fix down the line but temp fix here.
+							if(i == 0 || (j > 0 && i == 1))
+								item += items[i].trim();
+							else
+								item += " " + items[i].trim();
+						}
+						newList.push(item.replace(/, /gi, ""));
+					}
 					
 					// Adds to the text file -- might not need writeFile anymore, but probably won't touch it anyway.
 					if(newList.length == 1)
-						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", listItems, (err) => { if(err) { console.error(err); return; } } );
+						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", newList, (err) => { if(err) { console.error(err); return; } } );
 					else
-						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "," + listItems, (err) => { if(err) { console.error(err); return; } } );
-					//newList = [];
-					//reloadList();
-					// Once these two run, it keeps the spaces in the file -- need to split between commas as well
-					
+						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "," + newList, (err) => { if(err) { console.error(err); return; } } );
 					msg.react("👍");
 					clearConfirm = false;
-				} else if(params[1].includes("rmv")) {
-					// Concatenates items with spaces to match ones in the list for deleting
-					let longParams = params[2];
-					for(let i = 3; i < params.length; i++)
-						longParams += " " + params[i];
+				} 
+				else if(params[1].includes("rmv")) {
 					
-					// Removes the specified item
-					newList.splice(newList.indexOf(longParams), 1);
+					// Put all the index nums to remove into the removeList
+					var removeList = params.filter(function(value, index, arr) { return index > 1; });
+
+					// Make sure all the indexes with hyphens in them go from low to high, rather than high to low or one number to the same number -- e.g., 2-6 is fine but not 6-2 or 2-2.
+					for(let i = 0; i < removeList.length; i++) {
+						if(removeList[i].includes("-")) {
+							let testBackwards = removeList[i].split("-");
+							if(testBackwards[0] >= testBackwards[1]) {
+								msg.channel.send("Please make sure all multiple index inputs go from low to high.");
+								return;
+							}
+						}
+					}
+
+					// Sort due to highest value about to be edited
+					removeList.sort(function (a, b) {
+						if(a.includes("-"))
+							a = getLarger(a);
+						if(b.includes("-"))
+							b = getLarger(b);
+						
+						if(parseInt(a) > parseInt(b)) {
+							return -1;
+						} if(parseInt(b) > parseInt(a)) {
+							return 1;
+						}
+						return 0;
+					});
+					
+					// Remove the values term by term.
+					for(let i = 0; i < removeList.length; i++)
+						removeValue(removeList[i], msg);
 					
 					// Chuck the items in the list together 
 					let listItems = "";
@@ -169,16 +201,18 @@ client.on('message', msg => {
 						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", listItems, (err) => { if(err) { console.error(err); return; } } );
 					msg.react("👍");
 					clearConfirm = false;
-				} else if (params[1].includes("show")) {
+				} 
+				else if (params[1].includes("show")) {
 					if(newList.length == 0 || (newList[0] == "empty" && newList.length == 1)) {
 						msg.channel.send("There are no items in the list.");
 					} else {
 						let displayList = "The item(s) in the shopping list are: \n";
 						for(let i = 0; i < newList.length; i++)
-							displayList += "• " + capitaliseFirstLetter(newList[i]) + "\n";
+							displayList += (i + 1) + ". " + capitaliseFirstLetter(newList[i]) + "\n";
 						msg.channel.send(displayList);
 					}
-				} else {
+				} 
+				else {
 					if (clearConfirm && clearer == msg.author) {
 						newList = [];
 						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "empty", (err) => { if(err) { console.error(err); return; } } );
@@ -263,7 +297,7 @@ client.on('message', msg => {
 			}
 			
 			// Separate one to pin XP everytime Rob posts it. MAY make unpin last XP later.
-			if(msg.author == "<@176654870261006336>" && str.includes("lopip - ") || str.includes("lopip: ") || str.includes("lopip +"))
+			if(msg.author == "<@176654870261006336>" && (str.includes("lopip - ") || str.includes("lopip: ") || str.includes("lopip +")))
 				msg.pin();
 		}
 	}
@@ -354,10 +388,9 @@ async function querySpell(name, ch) {
 		}
 		
 		let concDur = "\nDuration: ";
-		if(spell.concentration == "yes")
-			concDur += "Concentration, " + spell.duration;
-		else
-			concDur += spell.duration;
+		if(spell.concentration == "yes" || spell.concentration == "true")
+			concDur += "Concentration, ";
+		concDur += spell.duration;
 		
 		let charSoFar = 89 + correctApos(spell.name).length + level.length + spell.casting_time.length + spell.range.length + comps.length + concDur.length;
 		let msgArray = [];
@@ -539,3 +572,42 @@ function reloadList() {
 	});
 }
 
+// Returns a with the larger and removes the comma at the end (?)
+function getLarger(a) {
+	let newA = a.split("-");
+	if(newA[0] > newA[1])
+		a = newA[0];
+	else
+		a = newA[1];
+	return a.replace(/,/gi, "");
+}
+
+// Removes a value from array list1 found in array list2
+function removeValue(val, msg) {
+	val = val.replace(",", "");
+	
+	if(val.includes("-")) {
+		let toNum = val.split("-");
+		
+		if(!(toNum[0] >= 0 && toNum[0] <= newList.length - 1 && toNum[1] >= 0 && toNum[1] <= newList.length)) {
+			msg.channel.send("Invalid indexes, try again loser 🤣🤣🤣");
+			return;
+		}
+		
+		// Remove multiple list items in one go
+		newList = newList.filter(function(value, index, arr) {
+			return (index > (toNum[1] - 1)) || (index < (toNum[0] - 1));
+		});
+	} else {
+		if(!(val >= 0 && val <= newList.length)) {
+			msg.channel.send("Invalid index, try again loser 🤣🤣🤣");
+			console.log("Index was " + val + ", newList.length = " + newList.length);
+			return;
+		}
+		
+		// Remove multiple list items in one go
+		newList = newList.filter(function(value, index, arr) {
+			return index > val - 1 || index < val - 1;
+		});
+	}
+}
