@@ -220,17 +220,16 @@ client.on('message', msg => {
 		}
 		// If it's not a command but instead a keyword/phrase, ...
 		else {
-			// If the word "arf" pops up, react with "nya" to balance it out
-			else if(str.includes("arf")) {
+			// "arf"
+			if(str.includes("arf")) {
 				Promise.resolve(msg.react("🇳")).then(
 					function() { return Promise.resolve(msg.react("🇾")).then(
 						function() { return Promise.resolve(msg.react("🇦")); })
 					}
 				);
 			} 
-			// Also seperately check for these keywords:
 			// "weeha"
-			if(str.includes("weeha"))
+			else if(str.includes("weeha"))
 				msg.channel.send("you are very wise my friend");
 			// The name of the sucker of the month
 			else if (str.includes("nathan") || str.includes("nato"))
