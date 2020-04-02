@@ -7,8 +7,7 @@ const client = new Discord.Client();
 //const channel = new Discord.ClientUser();
 
 // Variables for the bot scoring
-var OnotA = false;
-var botScoreO = 0, botScoreA = 0;
+var botScoreO = 0;
 
 // Variables for the shopping list
 var newList = [];
@@ -29,9 +28,7 @@ client.on('ready', () => {
 			console.error(err); 
 			return;
 		}
-		var temp = contents.split(',');
-		botScoreO = temp[0];
-		botScoreA = temp[1];
+		botScoreO = contents;
 	});
 	
 	reloadList();
@@ -56,25 +53,15 @@ client.on('message', msg => {
 	// Makes sure he doesn't reply to himself
 	if(msg.channel.id != "638200674399551519" && msg.author != "<@591786115975872512>") {
 		
-		// Figures out which bot has spoken last
-		if(msg.author == "<@591589660610789376>") {
-			OnotA = false;
-		}
-		
 		// ! is the character I'm using to denote commands
 		if(str.charAt(0) == "!") {
 			var params = str.split(" ");
 			// Report on (current) bot score
 			if(params[0].includes("!score")) {
-				if(str.includes("alpha") && str.includes("omega")) {
-					msg.channel.send("My all-time score is " + botScoreO + ", and Alpha's is " + botScoreA);
-				} else if(str.includes("alpha")) {
-					msg.channel.send("Alpha's all-time score is " + botScoreA);
-				} else if (str.includes("omega")) {
+				if (str.includes("omega")) {
 					msg.channel.send("My all-time score is " + botScoreO);
 				} else
-					msg.channel.send("My all-time score is " + botScoreO + ", and Alpha's is " + botScoreA);
-				fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/botscore.txt", botScoreO + "," + botScoreA, (err) => { if(err) { console.error(err); return; } } );
+					msg.channel.send("My all-time score is " + botScoreO);
 			}	 
 			// Report back with spell 
 			else if(params[0].includes("!spell")) {
@@ -92,7 +79,7 @@ client.on('message', msg => {
 				if(!ping && reply != "")
 					msg.channel.send(reply);
 				else
-					msg.channel.send("Don't abuse me :(");
+					msg.channel.send("I can't shout that loud :(");
 				msg.delete().catch(console.error);
 			}
 			// Rolls whatever dice the user specifies
@@ -224,25 +211,15 @@ client.on('message', msg => {
 						clearConfirm = true;
 					}
 				}
-				OnotA = true;
 			}
 			// Returns all commands that are implemented atm
 			else if(params[0].includes("!help"))
-				msg.channel.send("**Commands:**\n• !score [alpha|omega] to report the daily score of both/either bot(s).\n• !spell <spell name> to get data on D&D 5e spells.\n• !roll {die|+|-|value}\n• !say <message> to make me say anything/ping anyone for you anonymously (mostly)\n• !list {add|rmv|show|clear} <item> to add to the flat shopping list. (Only available to Flat-Beta members)");
+				msg.channel.send("**Commands:**\n• !score [omega] to report the score of Omega.\n• !spell <spell name> to get data on D&D 5e spells.\n• !roll {die|+|-|value}\n• !say <message> to make me say anything/ping anyone for you anonymously (mostly)\n• !list {add|rmv|show|clear} <item> to add to the flat shopping list. (Only available to Flat-Beta members)");
 			else
 				msg.channel.send("No such command. Use !help to check current available commands");
-			OnotA = true;
 		}
 		// If it's not a command but instead a keyword/phrase, ...
 		else {
-		
-			// If the @ was for @testrole, do this
-			if(str.includes("<@&591856462628913162>")) {
-				// Promises make sure the reactions go in the correct order
-				Promise.resolve(msg.react("🇭")).then(
-					function() { return Promise.resolve(msg.react("🇮")); }
-				);
-			} 
 			// If the word "arf" pops up, react with "nya" to balance it out
 			else if(str.includes("arf")) {
 				Promise.resolve(msg.react("🇳")).then(
@@ -251,35 +228,28 @@ client.on('message', msg => {
 					}
 				);
 			} 
-			// Also seperately check for these keywords
-			if(str.includes("weeha")) {
+			// Also seperately check for these keywords:
+			// "weeha"
+			if(str.includes("weeha"))
 				msg.channel.send("you are very wise my friend");
-				OnotA = true;
-			} 
-			// the name of the sucker of the month
-			else if (str.includes("nathan") || str.includes("nato")) {
+			// The name of the sucker of the month
+			else if (str.includes("nathan") || str.includes("nato"))
 				msg.channel.send("more like stinky <:rad:487522054485049356>");
-				OnotA = true;
-			}
 			// "good bot"
 			else if(str.includes("good bot")) {
-				if(OnotA) {
-					botScoreO++;
-					var love = msg.guild.emojis.find(emoji => emoji.name == 'love');
-					msg.react(love);
-				} else
-					botScoreA++;
+				botScoreO++;
+				var love = msg.guild.emojis.find(emoji => emoji.name == 'love');
+				msg.react(love);
+				fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/botscore.txt", botScoreO, (err) => { if(err) { console.error(err); return; } } );
 			}
 			// "bad bot"
 			else if(str.includes("bad bot")) {
-				if(OnotA) {
-					botScoreO--;
-					var sad = msg.guild.emojis.find(emoji => emoji.name == 'sad');
-					msg.react(sad);
-				} else
-					botScoreA--;
+				botScoreO--;
+				var sad = msg.guild.emojis.find(emoji => emoji.name == 'sad');
+				msg.react(sad);
+				fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/botscore.txt", botScoreO, (err) => { if(err) { console.error(err); return; } } );
 			}
-			// "Hey Omega"
+			// "hey omega"
 			else if(str.includes("hey omega")) {
 				// Get a random number from 0-4
 				var c = Math.floor(Math.random() * Math.floor(5));
@@ -293,7 +263,6 @@ client.on('message', msg => {
 					msg.channel.send("What would you like?");
 				else
 					msg.channel.send("What can I do for you?");
-				OnotA = true;
 			}
 			
 			// Separate one to pin XP everytime Rob posts it. MAY make unpin last XP later.
