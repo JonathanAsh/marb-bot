@@ -232,8 +232,8 @@ client.on('message', msg => {
 			else if(str.includes("weeha"))
 				msg.channel.send("you are very wise my friend");
 			// The name of the sucker of the month
-			else if (str.includes("nathan") || str.includes("nato"))
-				msg.channel.send("more like stinky <:rad:487522054485049356>");
+			else if (str.includes("ryan"))
+				msg.channel.send("ryan? more like stinky <:rad:487522054485049356>");
 			// "good bot"
 			else if(str.includes("good bot")) {
 				botScoreO++;
