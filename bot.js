@@ -3,6 +3,7 @@ const Discord = require('discord.js');
 var auth = require('./auth.json');
 const fetch = require("node-fetch");
 const fs = require('fs');
+const { isNullOrUndefined } = require('util');
 const client = new Discord.Client();
 //const channel = new Discord.ClientUser();
 
@@ -10,7 +11,7 @@ const client = new Discord.Client();
 var botScoreO = 0;
 
 // Variables for the shopping list
-var newList = [];
+var head = null;
 var clearConfirm = false;
 var clearer = "";
 
@@ -29,8 +30,8 @@ client.on('ready', () => {
 			return;
 		}
 		botScoreO = contents;
-	});
-	
+  });
+  // Loads shopping list from file
 	reloadList();
 });
 
@@ -53,7 +54,7 @@ client.on('message', msg => {
 	// Makes sure he doesn't reply to himself
 	if(msg.channel.id != "638200674399551519" && msg.author != "<@591786115975872512>") {
 		
-		// ! is the character I'm using to denote commands
+		// ! is the character I'm using to prefix commands
 		if(str.charAt(0) == "!") {
 			var params = str.split(" ");
 			// Report on (current) bot score
@@ -107,102 +108,83 @@ client.on('message', msg => {
 						msg.channel.send("~~eat my ass~~ Please specify an item to add to the list");
 						return;
 					}
-					
-					// Remove the empty placeholder
-					if(newList[0] == "empty")
-						newList.splice(newList.indexOf("empty"), 1)
-					
-					// Splits items by commas
-					var addList = str.replace("!list add ", "").split(",");
-					
-					// Concatenates items and evenly spaces them, then pushes to the list.
-					for(let j = 0; j < addList.length; j++) {
-						let items = addList[j].split(" ");
-						let item = "";
-						for(let i = 0; i < items.length; i++) {
-							// Still weird thing where I'm getting ""s somewhere after the first one, probably better to fix down the line but temp fix here.
-							if(i == 0 || (j > 0 && i == 1))
-								item += items[i].trim();
-							else
-								item += " " + items[i].trim();
-						}
-						newList.push(item.replace(/, /gi, ""));
-					}
-					
+          
+          // Splits items by commas
+          // TODO: Check that this actually works, should do but best to be safe
+          var addList = str.replace("!list add ", "").split(",");
+
+          // Creates new head if list was empty (and sets curr to the head)
+          var curr;
+          if(head == isNullOrUndefined) {
+            head = new Item(addList[0].toString());
+            curr = head;
+          } else
+            curr = getLastItem();
+
+          // Go through all the given other items and add them to the end of the list.
+          for(let j = 0; j < addList.length; j++) {
+            if(curr == head) { j = 1; }
+            curr.next = new Item(addList[j]);
+            curr = curr.next;
+          }
+          
 					// Adds to the text file -- might not need writeFile anymore, but probably won't touch it anyway.
-					if(newList.length == 1)
-						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", newList, (err) => { if(err) { console.error(err); return; } } );
-					else
-						fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "," + newList, (err) => { if(err) { console.error(err); return; } } );
+					fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", getAllItems(), (err) => { if(err) { console.error(err); return; } } );
 					msg.react("👍");
 					clearConfirm = false;
 				} 
 				else if(params[1].includes("rmv")) {
-					
-					// Put all the index nums to remove into the removeList
-					var removeList = params.filter(function(value, index, arr) { return index > 1; });
+          
+          // Go through list and check if any of the names match. If they do, then reference to the name matched one changes to the name matched one's next reference (just skips over it).
+          var rmvList = str.replace("!list rmv ", "").split(",");
 
-					// Make sure all the indexes with hyphens in them go from low to high, rather than high to low or one number to the same number -- e.g., 2-6 is fine but not 6-2 or 2-2.
-					for(let i = 0; i < removeList.length; i++) {
-						if(removeList[i].includes("-")) {
-							let testBackwards = removeList[i].split("-");
-							if(testBackwards[0] >= testBackwards[1]) {
-								msg.channel.send("Please make sure all multiple index inputs go from low to high.");
-								return;
-							}
-						}
-					}
-
-					// Sort due to highest value about to be edited
-					removeList.sort(function (a, b) {
-						if(a.includes("-"))
-							a = getLarger(a);
-						if(b.includes("-"))
-							b = getLarger(b);
-						
-						if(parseInt(a) > parseInt(b)) {
-							return -1;
-						} if(parseInt(b) > parseInt(a)) {
-							return 1;
-						}
-						return 0;
-					});
-					
-					// Remove the values term by term.
-					for(let i = 0; i < removeList.length; i++)
-						removeValue(removeList[i], msg);
-					
-					// Chuck the items in the list together 
-					let listItems = "";
-					for(let i = 0; i < newList.length; i++) {
-						if(i != newList.length - 1)
-							listItems += newList[i] + ",";
-						else
-							listItems += newList[i];
-					}
-					
+          if(head == isNullOrUndefined)
+            msg.channel.send("wth r u doin n00b there's no list in the first place >:((");
+          else {
+            var curr = head;
+            var prev;
+            // Go through all the items to remove
+            for(let j = 0; j < rmvList.length; j++) {
+              let flag = false;
+              while(curr != isNullOrUndefined) {
+                // If name matches, delete reference
+                if(curr.name == rmvList) {
+                  flag = true;
+                  prev.next = curr.next;
+                }
+                // Bring along prev and curr
+                prev = curr;
+                curr = curr.next;
+                // Might need a break; in here, otherwise will delete all instances with the same name... probably a good thing?
+              }
+              if (flag)
+                msg.channel.send("Could not find " + rmvList[j] + " in the list to delete :/// make sure you spelt it properly :cop:");
+            }
+          }
+          
 					// Replace the file with a new updated one -- with "empty" in the file if there's nothing lef tin the list
-					if(newList.length == 0 || newList[0] == null)
-						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "empty", (err) => { if(err) { console.error(err); return; } } );
-					else
-						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", listItems, (err) => { if(err) { console.error(err); return; } } );
+					fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", getAllItems(), (err) => { if(err) { console.error(err); return; } } );
 					msg.react("👍");
 					clearConfirm = false;
 				} 
 				else if (params[1].includes("show")) {
-					if(newList.length == 0 || (newList[0] == "empty" && newList.length == 1)) {
-						msg.channel.send("There are no items in the list.");
-					} else {
-						let displayList = "The item(s) in the shopping list are: \n";
-						for(let i = 0; i < newList.length; i++)
-							displayList += (i + 1) + ". " + capitaliseFirstLetter(newList[i]) + "\n";
-						msg.channel.send(displayList);
-					}
+
+          // Just displays all the items in a list.
+          if(head == isNullOrUndefined)
+            msg.channel.send("There are no items in the list.");
+          else {
+            let displayList = "Shopping List: \n";
+            let temp = getAllItems().split(",");
+
+            for(let j = 0; j < temp.length; j++)
+              displayList += "• " + capitaliseFirstLetter(temp[j]) + "\n";
+            msg.channel.send(displayList);
+          }
 				} 
 				else {
 					if (clearConfirm && clearer == msg.author) {
-						newList = [];
-						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "empty", (err) => { if(err) { console.error(err); return; } } );
+						head = null;
+						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", head, (err) => { if(err) { console.error(err); return; } } );
 						msg.channel.send("List cleared.");
 						clearConfirm = false;
 					} else {
@@ -220,16 +202,8 @@ client.on('message', msg => {
 		}
 		// If it's not a command but instead a keyword/phrase, ...
 		else {
-			// "arf"
-			if(str.includes("arf")) {
-				Promise.resolve(msg.react("🇳")).then(
-					function() { return Promise.resolve(msg.react("🇾")).then(
-						function() { return Promise.resolve(msg.react("🇦")); })
-					}
-				);
-			} 
 			// "weeha"
-			else if(str.includes("weeha"))
+			if(str.includes("weeha"))
 				msg.channel.send("you are very wise my friend");
 			// The name of the sucker of the month
 			else if (str.includes("ryan"))
@@ -519,7 +493,7 @@ function getDateTime() {
 
 }
 
-// Reads from the shoppingList file and adds values into the newList array
+// Reads from the shoppingList file and adds values into the linked list
 function reloadList() {
 	// Read from saved shopping list
 	fs.readFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "utf8", function(err, contents) {
@@ -527,55 +501,48 @@ function reloadList() {
 			console.error(err); 
 			return;
 		}
+    console.log("contents: \"" + contents + "\""); // TODO: NEED TO CHECK WHAT IS RETURNED WITH AN EMPTY FILE!!
 		var temp = contents.split(',');
 		
-		if(temp[0] == "empty") {
+    if(temp[0] == "empty") { // TODO: Make this actually check for an empty file as above (null? that's what it's putting in, anyway)
 			console.log("No items in list on startup.");
-		} else if(temp.length == 1)
-			newList = temp;
-		else {
-			for(let i = 0; i < temp.length; i++)
-				newList.push(temp[i]);
-		}
+		}	else {
+			// Creates the new head and carries on adding the rest of the items all linked up
+      head = new Item(temp[0].toString());
+      var curr = head;
+      for(let i = 1; i < temp.length; i++) {
+        curr.next = new Item(temp[i].toString());
+        curr = curr.next;
+      }
+    }
 	});
 }
 
-// Returns a with the larger and removes the comma at the end (?)
-function getLarger(a) {
-	let newA = a.split("-");
-	if(newA[0] > newA[1])
-		a = newA[0];
-	else
-		a = newA[1];
-	return a.replace(/,/gi, "");
+// Constructor for shopping list items
+function Item(name, next) {
+  this.name = name;
+  this.next = next;
 }
 
-// Removes a value from array list1 found in array list2
-function removeValue(val, msg) {
-	val = val.replace(",", "");
-	
-	if(val.includes("-")) {
-		let toNum = val.split("-");
-		
-		if(!(toNum[0] >= 0 && toNum[0] <= newList.length - 1 && toNum[1] >= 0 && toNum[1] <= newList.length)) {
-			msg.channel.send("Invalid indexes, try again loser 🤣🤣🤣");
-			return;
-		}
-		
-		// Remove multiple list items in one go
-		newList = newList.filter(function(value, index, arr) {
-			return (index > (toNum[1] - 1)) || (index < (toNum[0] - 1));
-		});
-	} else {
-		if(!(val >= 0 && val <= newList.length)) {
-			msg.channel.send("Invalid index, try again loser 🤣🤣🤣");
-			console.log("Index was " + val + ", newList.length = " + newList.length);
-			return;
-		}
-		
-		// Remove multiple list items in one go
-		newList = newList.filter(function(value, index, arr) {
-			return index > val - 1 || index < val - 1;
-		});
-	}
+// Returns the final item in the list, useful for adding new items to the list.
+function getLastItem() {
+  var curr = head;
+
+  if(curr == isNullOrUndefined)
+    return;
+  else {
+    while(curr.next != isNullOrUndefined)
+      curr = curr.next;
+    return curr; // TODO: Make sure this returns the last object and not the one before.
+  }
+}
+
+// Returns all the items names in the list, useful for the file saving and displaying the list.
+function getAllItems() {
+  var list = head.name;
+  var curr = head.next;
+  while (curr != isNullOrUndefined)
+    list += "," + curr.name;
+    curr = curr.next;
+  return list;
 }
