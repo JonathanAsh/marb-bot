@@ -12,6 +12,7 @@ var botScoreO = 0;
 
 // Variables for the shopping list
 var head = null;
+var last = head;
 var clearConfirm = false;
 var clearer = "";
 
@@ -108,78 +109,92 @@ client.on('message', msg => {
 						msg.channel.send("~~eat my ass~~ Please specify an item to add to the list");
 						return;
 					}
-          
-          // Splits items by commas
-          // TODO: Check that this actually works, should do but best to be safe
-          var addList = str.replace("!list add ", "").split(",");
+			  
+					// Splits items by commas
+					var addList = str.replace("!list add ", "").split(",");
 
-          // Creates new head if list was empty (and sets curr to the head)
-          var curr;
-          if(head == isNullOrUndefined) {
-            head = new Item(addList[0].toString());
-            curr = head;
-          } else
-            curr = getLastItem();
-
-          // Go through all the given other items and add them to the end of the list.
-          for(let j = 0; j < addList.length; j++) {
-            if(curr == head) { j = 1; }
-            curr.next = new Item(addList[j]);
-            curr = curr.next;
-          }
-          
+					// Creates new head if list was empty (and sets curr to the head)
+					var curr;
+					var newHead = 0;
+					if(isNullOrUndefined(head)) {
+						head = new Item(addList[0].toString());
+						console.log("New head added!");
+						curr = head;
+						last = head;
+						newHead = 1;
+					} else
+						curr = last;
+					
+					// Go through all the given other items and add them to the end of the list.
+					for(let j = newHead; j < addList.length; j++) {
+						if(addList[j] != undefined) {
+							curr.next = new Item(addList[j].trim().toLowerCase());
+							console.log("New item added!");
+							curr = curr.next;
+							last = curr;
+						}
+					}	
+			  
 					// Adds to the text file -- might not need writeFile anymore, but probably won't touch it anyway.
 					fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", getAllItems(), (err) => { if(err) { console.error(err); return; } } );
 					msg.react("👍");
 					clearConfirm = false;
-				} 
+				}
 				else if(params[1].includes("rmv")) {
           
-          // Go through list and check if any of the names match. If they do, then reference to the name matched one changes to the name matched one's next reference (just skips over it).
-          var rmvList = str.replace("!list rmv ", "").split(",");
+					// Go through list and check if any of the names match. If they do, then reference to the name matched one changes to the name matched one's next reference (just skips over it).
+					var rmvList = str.replace("!list rmv ", "").split(",");
 
-          if(head == isNullOrUndefined)
-            msg.channel.send("wth r u doin n00b there's no list in the first place >:((");
-          else {
-            var curr = head;
-            var prev;
-            // Go through all the items to remove
-            for(let j = 0; j < rmvList.length; j++) {
-              let flag = false;
-              while(curr != isNullOrUndefined) {
-                // If name matches, delete reference
-                if(curr.name == rmvList) {
-                  flag = true;
-                  prev.next = curr.next;
-                }
-                // Bring along prev and curr
-                prev = curr;
-                curr = curr.next;
-                // Might need a break; in here, otherwise will delete all instances with the same name... probably a good thing?
-              }
-              if (flag)
-                msg.channel.send("Could not find " + rmvList[j] + " in the list to delete :/// make sure you spelt it properly :cop:");
-            }
-          }
+					if(isNullOrUndefined(head))
+						msg.channel.send("wth r u doin n00b there's no list in the first place >:((");
+					else {
+						// Go through all the items to remove
+						for(let j = 0; j < rmvList.length; j++) {
+							var curr = head;
+							var prev;
+							let found = false;
+							console.log(curr);
+							while(!isNullOrUndefined(curr)) {
+								// If name matches, delete reference
+								rmvList[j] = rmvList[j].trim().toLowerCase(); // not sure it works inline :(
+								console.log("curr.name = '" + curr.name + "', rmvList[j] = '" + rmvList[j] + "'");
+								if(curr.name === rmvList[j]) {
+									found = true;
+									if(curr == last)
+										last = prev;
+									if(curr == head)
+										head = curr.next;
+									else
+										prev.next = curr.next;
+								}
+								// Bring along prev and curr
+								prev = curr;
+								curr = curr.next;
+								// Might need a break; in here, otherwise will delete all instances with the same name... probably a good thing?
+							}
+							if(!found)
+								msg.channel.send("Could not find " + rmvList[j].trim() + " in the list to delete :/// make sure you spelt it properly :cop:");
+						}
           
-					// Replace the file with a new updated one -- with "empty" in the file if there's nothing lef tin the list
-					fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", getAllItems(), (err) => { if(err) { console.error(err); return; } } );
-					msg.react("👍");
+						// Replace the file with a new updated one -- with "empty" in the file if there's nothing lef tin the list
+						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", getAllItems(), (err) => { if(err) { console.error(err); return; } } );
+						msg.react("👍");
+					}
 					clearConfirm = false;
 				} 
 				else if (params[1].includes("show")) {
 
-          // Just displays all the items in a list.
-          if(head == isNullOrUndefined)
-            msg.channel.send("There are no items in the list.");
-          else {
-            let displayList = "Shopping List: \n";
-            let temp = getAllItems().split(",");
+					// Just displays all the items in a list.
+					if(isNullOrUndefined(head))
+						msg.channel.send("There are no items in the list.");
+					else {
+						let displayList = "Shopping List: \n";
+						let temp = getAllItems().split(",");
 
-            for(let j = 0; j < temp.length; j++)
-              displayList += "• " + capitaliseFirstLetter(temp[j]) + "\n";
-            msg.channel.send(displayList);
-          }
+						for(let j = 0; j < temp.length; j++)
+							displayList += "• " + capitaliseFirstLetter(temp[j]) + "\n";
+						msg.channel.send(displayList);
+					}
 				} 
 				else {
 					if (clearConfirm && clearer == msg.author) {
@@ -501,20 +516,23 @@ function reloadList() {
 			console.error(err); 
 			return;
 		}
-    console.log("contents: \"" + contents + "\""); // TODO: NEED TO CHECK WHAT IS RETURNED WITH AN EMPTY FILE!!
 		var temp = contents.split(',');
 		
-    if(temp[0] == "empty") { // TODO: Make this actually check for an empty file as above (null? that's what it's putting in, anyway)
+		if(temp[0] == "" || temp[0] == "null") {
 			console.log("No items in list on startup.");
-		}	else {
+		} else {
 			// Creates the new head and carries on adding the rest of the items all linked up
-      head = new Item(temp[0].toString());
-      var curr = head;
-      for(let i = 1; i < temp.length; i++) {
-        curr.next = new Item(temp[i].toString());
-        curr = curr.next;
-      }
-    }
+			head = new Item(temp[0].toString());
+			var curr = head;
+			if(temp.length > 1) {
+				for(let i = 1; i < temp.length; i++) {
+					curr.next = new Item(temp[i].toString());
+					curr = curr.next;
+					last = curr;
+				}
+			} else
+				last = head;
+		}
 	});
 }
 
@@ -526,23 +544,27 @@ function Item(name, next) {
 
 // Returns the final item in the list, useful for adding new items to the list.
 function getLastItem() {
-  var curr = head;
+	var curr = head;
 
-  if(curr == isNullOrUndefined)
-    return;
-  else {
-    while(curr.next != isNullOrUndefined)
-      curr = curr.next;
-    return curr; // TODO: Make sure this returns the last object and not the one before.
-  }
+	if(isNullOrUndefined(curr))
+		return;
+	else {
+		while(!isNullOrUndefined(curr.next) || !isNullOrUndefined(curr.next.name))
+			curr = curr.next;
+		return curr; // TODO: Make sure this returns the last object and not the one before.
+	}
 }
 
 // Returns all the items names in the list, useful for the file saving and displaying the list.
 function getAllItems() {
-  var list = head.name;
-  var curr = head.next;
-  while (curr != isNullOrUndefined)
-    list += "," + curr.name;
-    curr = curr.next;
-  return list;
+	if(isNullOrUndefined(head))
+		return "";
+	var list = head.name;
+	var curr = head.next;
+
+	while (!isNullOrUndefined(curr) && curr.name !== undefined) {
+		list += "," + curr.name;
+		curr = curr.next;
+	}
+	return list;
 }
