@@ -23,9 +23,9 @@ client.login(auth.token).catch(console.error);
 client.on('ready', () => {
 	console.log('Logged in as ${client.user.tag}!');
 	// Log Omega's bootup time
-	fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/logs.txt", "-- OMEGA START: " + getDateTime() + " --\r\n", (err) => { if(err) { console.error(err); return; } } );
+	fs.appendFile("/Users/jonst/Desktop/Discord Bot/logs.txt", "-- OMEGA START: " + getDateTime() + " --\r\n", (err) => { if(err) { console.error(err); return; } } );
 	// Get bot score info from last run
-	fs.readFile("/Users/The Baboon/Desktop/Discord Bot/botscore.txt", "utf8", function(err, contents) {
+	fs.readFile("/Users/jonst/Desktop/Discord Bot/botscore.txt", "utf8", function(err, contents) {
 		if(err) { 
 			console.error(err); 
 			return;
@@ -42,7 +42,7 @@ client.on('message', msg => {
 	// Log all messages sent in the console and in a text file for long-term
 	var report = replaceIDs("\"" + msg.content + "\" from " + msg.author + " in " + msg.channel + " at " + getDateTime());
 	console.log(report);
-	fs.appendFile("/Users/The Baboon/Desktop/Discord Bot/logs.txt", report + "\r\n", (err) => { if(err) { console.error(err); return; } } );
+	fs.appendFile("/Users/jonst/Desktop/Discord Bot/logs.txt", report + "\r\n", (err) => { if(err) { console.error(err); return; } } );
 	
 	var str = msg.toString().toLowerCase();
 		
@@ -136,7 +136,7 @@ client.on('message', msg => {
 					}	
 			  
 					// Adds to the text file -- might not need writeFile anymore, but probably won't touch it anyway.
-					fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", getAllItems(), (err) => { if(err) { console.error(err); return; } } );
+					fs.writeFile("/Users/jonst/Desktop/Discord Bot/shopping-list.txt", getAllItems(), (err) => { if(err) { console.error(err); return; } } );
 					msg.react("👍");
 					clearConfirm = false;
 				}
@@ -177,7 +177,7 @@ client.on('message', msg => {
 						}
           
 						// Replace the file with a new updated one -- with "empty" in the file if there's nothing lef tin the list
-						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", getAllItems(), (err) => { if(err) { console.error(err); return; } } );
+						fs.writeFile("/Users/jonst/Desktop/Discord Bot/shopping-list.txt", getAllItems(), (err) => { if(err) { console.error(err); return; } } );
 						msg.react("👍");
 					}
 					clearConfirm = false;
@@ -199,7 +199,7 @@ client.on('message', msg => {
 				else {
 					if (clearConfirm && clearer == msg.author) {
 						head = null;
-						fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", head, (err) => { if(err) { console.error(err); return; } } );
+						fs.writeFile("/Users/jonst/Desktop/Discord Bot/shopping-list.txt", head, (err) => { if(err) { console.error(err); return; } } );
 						msg.channel.send("List cleared.");
 						clearConfirm = false;
 					} else {
@@ -228,14 +228,14 @@ client.on('message', msg => {
 				botScoreO++;
 				var love = msg.guild.emojis.find(emoji => emoji.name == 'love');
 				msg.react(love);
-				fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/botscore.txt", botScoreO, (err) => { if(err) { console.error(err); return; } } );
+				fs.writeFile("/Users/jonst/Desktop/Discord Bot/botscore.txt", botScoreO, (err) => { if(err) { console.error(err); return; } } );
 			}
 			// "bad bot"
 			else if(str.includes("bad bot")) {
 				botScoreO--;
 				var sad = msg.guild.emojis.find(emoji => emoji.name == 'sad');
 				msg.react(sad);
-				fs.writeFile("/Users/The Baboon/Desktop/Discord Bot/botscore.txt", botScoreO, (err) => { if(err) { console.error(err); return; } } );
+				fs.writeFile("/Users/jonst/Desktop/Discord Bot/botscore.txt", botScoreO, (err) => { if(err) { console.error(err); return; } } );
 			}
 			// "hey omega"
 			else if(str.includes("hey omega")) {
@@ -480,7 +480,7 @@ function replaceIDs(r) {
 			.replace(/<@176654870261006336>/g, "@PrimeHylian#6432").replace(/<@314896092502294529>/g, "@Moodes567#2862").replace(/<@561029934844346381>/g, "@Natopotato#4629").replace(/<@186703389462233089>/g, "@OrphanPunter870#8474")
 			.replace(/<@591786115975872512>/g, "@Omega Bot#5343").replace(/<@591589660610789376>/g, "@Alpha Bot#4046").replace(/<@234395307759108106>/g, "@Groovy#7254");
 			
-}
+} // TODO: Add all the M'Bois and also the new channels.
 
 // Returns the date and time in a nice format for the console and text file logs
 function getDateTime() {
@@ -511,7 +511,7 @@ function getDateTime() {
 // Reads from the shoppingList file and adds values into the linked list
 function reloadList() {
 	// Read from saved shopping list
-	fs.readFile("/Users/The Baboon/Desktop/Discord Bot/shopping-list.txt", "utf8", function(err, contents) {
+	fs.readFile("/Users/jonst/Desktop/Discord Bot/shopping-list.txt", "utf8", function(err, contents) {
 		if(err) { 
 			console.error(err); 
 			return;
@@ -551,7 +551,7 @@ function getLastItem() {
 	else {
 		while(!isNullOrUndefined(curr.next) || !isNullOrUndefined(curr.next.name))
 			curr = curr.next;
-		return curr; // TODO: Make sure this returns the last object and not the one before.
+		return curr;
 	}
 }
 

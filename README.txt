@@ -1,4 +1,4 @@
-First attempt making a Discord bot. Uses Node.js, haven't really used it before but it seems pretty intuitive.
+First attempt making a Discord bot. Uses Discord.js (which is Node), seems pretty intuitive.
 
 Current Functionality:
   - Replies to certain keywords in messages
@@ -13,3 +13,6 @@ Current Functionality:
   - Holds a list of shopping items that can be manipulated in Discord
 
 - Jonathan Ashworth
+
+TODO: Add more channel names to be swapped for easy reading in logs
+TODO: Change SOTD
