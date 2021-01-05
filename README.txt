@@ -16,3 +16,4 @@ Current Functionality:
 
 TODO: Add more channel names to be swapped for easy reading in logs
 TODO: Change SOTD
+TODO: Space out code slightly so easier to follow
