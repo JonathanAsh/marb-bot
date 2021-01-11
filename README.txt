@@ -14,6 +14,5 @@ Current Functionality:
 
 - Jonathan Ashworth
 
-TODO: Add more channel names to be swapped for easy reading in logs
-TODO: Change SOTD
+TODO: Change SOTM
 TODO: Space out code slightly so easier to follow

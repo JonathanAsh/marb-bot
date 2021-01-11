@@ -20,6 +20,7 @@ client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`)
   // Log Omega's bootup time
   fs.appendFile('/Users/jonst/Desktop/Discord Bot/text_files/logs.txt', '-- OMEGA START: ' + getDateTime() + ' --\r\n', (err) => { if (err) { console.error(err) } })
+
   // Get bot score info from last run
   fs.readFile('/Users/jonst/Desktop/Discord Bot/text_files/botscore.txt', 'utf8', function (err, contents) {
     if (err) {
@@ -28,7 +29,7 @@ client.on('ready', () => {
     }
     botScoreO = contents
   })
-  // Loads shopping list from file
+  // Shopping list
   reloadList()
 })
 
@@ -38,7 +39,6 @@ client.on('message', msg => {
   const report = replaceID('"' + msg.content + '" from ' + msg.author + ' in ' + msg.channel + ' at ' + getDateTime())
   console.log(report)
   fs.appendFile('/Users/jonst/Desktop/Discord Bot/text_files/logs.txt', report + '\r\n', (err) => { if (err) { console.error(err) } })
-
   const str = msg.toString().toLowerCase()
 
   // React to pings with :mention:, even if it's from Omega himself
@@ -48,12 +48,13 @@ client.on('message', msg => {
   }
 
   // Makes sure he doesn't reply to himself
-  if (msg.channel.id !== '638200674399551519' && msg.author !== '<@591786115975872512>') {
-    // ! is the character I'm using to prefix commands
+  if (msg.author !== '<@591786115975872512>') {
     if (str.charAt(0) === '!') {
+      // ! is the command prefix
       const params = str.split(' ')
-      // Report on (current) bot score
+
       if (params[0].includes('!score')) {
+        // Report on (current) bot score
         if (str.includes('omega')) {
           msg.channel.send('My all-time score is ' + botScoreO)
         } else {
@@ -103,7 +104,7 @@ client.on('message', msg => {
         msg.channel.send('No such command. Use !help to check current available commands')
       }
     } else {
-      // "weeha"
+      // If not a command, check if it's another keyword
       if (str.includes('weeha')) {
         msg.channel.send('you are very wise my friend')
       } else if (str.includes('ryan')) { // The name of the sucker of the month
