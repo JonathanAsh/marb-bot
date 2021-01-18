@@ -68,7 +68,7 @@ function replaceID (r) {
     .replace(/<@561029934844346381>/g, '@Natopotato#4629')
     .replace(/<@186703389462233089>/g, '@OrphanPunter870#8474')
     .replace(/<@313907748599234561>/g, '@ConfusedBiscuit#9418')
-    .replace(/<@202299106045984768>/g, 'Paengaroa#2292')
+    .replace(/<@202299106045984768>/g, '@Paengaroa#2292')
 }
 
 module.exports = {

@@ -47,8 +47,8 @@ client.on('message', msg => {
     msg.react(bean)
   }
 
-  // Makes sure he doesn't reply to himself
-  if (msg.author !== '<@591786115975872512>') {
+  // Makes sure he doesn't reply to himself or other bots
+  if (!msg.author.bot) {
     if (str.charAt(0) === '!') {
       // ! is the command prefix
       const params = str.split(' ')
